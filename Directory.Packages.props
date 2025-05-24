@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <ItemGroup>
-   <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <!-- ...existing package versions... -->
-    <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.5" />
-    <!-- Add packages for Migrations and code first -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.5" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5" />
-  </ItemGroup>
+    <!-- Enable central package managament -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
+        <!-- add Swashbuckle Annotations -->
+        <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2"/>
+        <!-- ...existing package versions... -->
+        <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556"/>
+        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.5"/>
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.5"/>
+        <!-- Add packages for Migrations and code first -->
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.5"/>
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5"/>
+    </ItemGroup>
 </Project>

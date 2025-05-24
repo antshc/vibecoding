@@ -1,3 +1,6 @@
+using Microsoft.OpenApi.Models;
+using OrdersApi;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,9 +8,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.EnableAnnotations();
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "Employee Benefit Cost Calculation Api",
+        Description = "Api to support employee benefit cost calculations"
+    });
+});
 
-var app = builder.Build();
+
+DependencyInjection.RegisterDependencies(builder.Services,builder.Configuration);
+
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -21,5 +36,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+PreStartup.Run(app);
 
 app.Run();

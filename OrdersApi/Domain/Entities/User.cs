@@ -1,5 +1,5 @@
-// Use Folder Structure and Code standarts from Readme.adoc for code generation.
-// Create User Entity with Id(guid), Name(string).
+// Follow StyleCop standards (docs, access modifiers, namespace, etc.) defined in .editorconfig.
+// Follow Code standards from the file code-standards.adoc for code generation.
 namespace OrdersApi.Domain.Entities;
 
 // <summary>
@@ -7,23 +7,35 @@ namespace OrdersApi.Domain.Entities;
 // </summary>
 public class User
 {
-    private User() { } // EF Core requires a parameterless constructor
+    private User()
+    {
+        // EF Core requires a parameterless constructor
+        Name = string.Empty;
+        Email = string.Empty;
+        Orders = new List<Order>();
+    }
 
-    public User(Guid id, string name)
+    public User(Guid id, string name, string email)
     {
         if (id == Guid.Empty)
             throw new ArgumentException("Id cannot be empty.", nameof(id));
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name cannot be null or whitespace.", nameof(name));
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email cannot be null or whitespace.", nameof(email));
 
         Id = id;
         Name = name;
+        Email = email;
+        Orders = new List<Order>();
     }
 
     public Guid Id { get; private set; }
     public string Name { get; private set; }
+    public string Email { get; private set; }
+    public ICollection<Order> Orders { get; private set; }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (ReferenceEquals(this, obj))
             return true;
@@ -39,7 +51,7 @@ public class User
         return Id.GetHashCode();
     }
 
-    public static bool operator ==(User left, User right)
+    public static bool operator ==(User? left, User? right)
     {
         if (ReferenceEquals(left, right))
             return true;
@@ -48,7 +60,7 @@ public class User
         return left.Id == right.Id;
     }
 
-    public static bool operator !=(User left, User right)
+    public static bool operator !=(User? left, User? right)
     {
         return !(left == right);
     }

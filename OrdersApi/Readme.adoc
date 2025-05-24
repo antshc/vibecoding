@@ -25,167 +25,20 @@
 * Event-Driven Architecture
 
 
-== Code Standards
-This guide defines coding conventions for projects using Clean Architecture and Domain-Driven Design (DDD) principles.
-To ensure maintainability, testability, and scalability of the `OrdersApi` project, we apply Clean Architecture principles combined with Domain-Driven Design (DDD). 
-This approach organizes code by business domain and separates concerns clearly across layers.
-All layers are implemented within the same project for simplicity using naming conventions standard to .NET applications:
-This structure encourages separation of concerns, facilitates unit testing, and allows the system to grow without becoming monolithic or tightly coupled.
+= Run project
 
-=== Folder structure
-[source]
-----
-OrdersApi/
-├── Application/                       // Application layer orchestrating use cases and rules
-│   ├── Abstractions/                 // Interfaces (e.g., IOrderService, IOrderQuery)
-│   ├── Services/                     // Implementations of application services
-│   ├── Queries/                      // Projection-based data access (read side)
-│   └── DTOs/                         // Data Transfer Objects for input/output across layers
-│
-├── Domain/                           // Core business logic and domain model
-│   ├── Entities/                     // Main domain entities (e.g., Order, User)
-│   ├── ValueObjects/                // Immutable value types (e.g., Address)
-│   ├── Enums/                        // Domain-specific enumerations (e.g., OrderStatus)
-│   └── Abstractions/                // Domain service interfaces and domain policies
-│
-├── Infrastructure/                   // Implementations of technical details
-│   ├── Data/                         // EF Core DbContext and configurations
-│   │   ├── Configurations/          // EntityTypeConfigurations (e.g., OrderConfiguration)
-│   │   ├── Repositories/            // Repository implementations (e.g., OrderRepository)
-│   │   └── Migrations/              // EF Core database migrations
-│   └── Integrations/                // Integrations with external services (e.g., payment gateway)
-│
-├── API/                              // Presentation layer (entry point)
-│   ├── Controllers/                 // API controllers (HTTP endpoints)
-│   └── Models/                      // API request and response models
-│
-├── Common/                           // Shared cross-cutting utilities and helpers
-│   ├── Exceptions/                  // Custom exception classes
-│   ├── Extensions/                  // Extension methods for cleaner code
-│   └── Utilities/                   // General-purpose helpers and utility functions
-----
- 
-=== Naming Conventions
+1. Clone the repository 🔄
+2. Open a terminal and navigate to the project directory 💻
+3. Run SQL database in a Docker container:
+    ```bash
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=yourStrong(!)Password" -e "MSSQL_PID=Express" -p 14330:1433 -d mcr.microsoft.com/mssql/server:2019-latest
+    ```
+4. Build and run the project ⚙️
+5. Use the API by Swagger or run integration tests 🧪
 
-- Use `PascalCase` for class names, method names, and properties.
-- Use `camelCase` for local variables and parameters.
-- Prefix interfaces with `I` (e.g., `IOrderService`).
-- Suffix DTOs with `Dto` (e.g., `CreateOrderDto`).
-- Use descriptive names over abbreviations.
-
-
-=== Class Layout
-
-Each class must follow this structure:
-
-1. `using` statements
-2. `namespace` file scope declaration
-3. XML `<summary>` comment for the class
-4. Class declaration
-5. Fields and properties
-6. Constructors
-7. Methods (public first, then private)
-8. Events or handlers (if applicable)
-
-Example:
-
-[source,csharp]
-----
-namespace OrdersApi.Domain.Entities;
-
-public class Order
-{
-    private Order() { } // EF Core requires a parameterless constructor
-
-    public Order(Guid id, Guid userId, string status, string products, decimal total)
-    {
-        if (id == Guid.Empty)
-            throw new ArgumentException("Id cannot be empty.", nameof(id));
-        if (userId == Guid.Empty)
-            throw new ArgumentException("UserId cannot be empty.", nameof(userId));
-        if (string.IsNullOrWhiteSpace(status))
-            throw new ArgumentException("Status cannot be null or whitespace.", nameof(status));
-        if (string.IsNullOrWhiteSpace(products))
-            throw new ArgumentException("Products cannot be null or whitespace.", nameof(products));
-        if (total < 0)
-            throw new ArgumentOutOfRangeException(nameof(total), "Total cannot be negative.");
-
-        Id = id;
-        UserId = userId;
-        Status = status;
-        Products = products;
-        Total = total;
-    }
-
-    public Guid Id { get; private set; }
-    public Guid UserId { get; private set; }
-    public string Status { get; private set; }
-    public string Products { get; private set; }
-    public decimal Total { get; private set; }
-
-    public override bool Equals(object obj)
-    {
-        if (ReferenceEquals(this, obj))
-            return true;
-        if (obj is null || GetType() != obj.GetType())
-            return false;
-
-        var other = (Order)obj;
-        return Id == other.Id;
-    }
-
-    public override int GetHashCode()
-    {
-        return Id.GetHashCode();
-    }
-
-    public static bool operator ==(Order left, Order right)
-    {
-        if (ReferenceEquals(left, right))
-            return true;
-        if (left is null || right is null)
-            return false;
-        return left.Id == right.Id;
-    }
-
-    public static bool operator !=(Order left, Order right)
-    {
-        return !(left == right);
-    }
-
-    // Add behavior here (DDD principle)
-}
-----
-
-== 4. DDD Best Practices
-
-- Entities should contain behavior, not just data.
-- Use **value objects** where applicable.
-- Repositories belong to the **domain interface layer**, implementations in infrastructure.
-- Services should represent **application use cases**, not utility logic.
-
-== 5. Dependency Injection
-
-- Use constructor injection for all dependencies.
-- Register dependencies in `Startup.cs` or `Program.cs` (via IServiceCollection).
-
-== 6. Event Handling
-
-- Use **Transactional Outbox** pattern to publish events after transactions.
-- Events must be immutable.
-- Consumers should be idempotent (use CorrelationId).
-
-== 7. Testing Standards
-
-- Unit tests for each service, use case, and repository.
-- Use Moq/FakeItEasy for mocking.
-- Integration tests should run with Dockerized dependencies (SQL, Service Bus Emulator).
-
-== 8. General Rules
-
-- No business logic in controllers — delegate to Application layer.
-- Use async/await for all I/O operations.
-- Avoid static utility classes unless absolutely necessary.
-- Keep methods short and focused — ideally under 20 lines.
-
-
+= Manage migrations
+```bash
+dotnet tool install --global dotnet-ef
+dotnet ef migrations add InitialMigration --project OrdersApi --startup-project OrdersApi -o Infrastructure/Data/Migrations
+dotnet ef migrations remove --project OrdersApi --startup-project OrdersApi
+```
