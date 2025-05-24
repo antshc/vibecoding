@@ -32,60 +32,39 @@ This approach organizes code by business domain and separates concerns clearly a
 All layers are implemented within the same project for simplicity using naming conventions standard to .NET applications:
 This structure encourages separation of concerns, facilitates unit testing, and allows the system to grow without becoming monolithic or tightly coupled.
 
-=== Folders Structure
+=== Folder structure
+[source]
+----
 OrdersApi/
-├── Application/
-│   ├── Abstractions/
-│   ├── Services/
-│   └── DTOs/
-├── Domain/
-│   ├── Entities/
-│   ├── ValueObjects/
-│   ├── Enums/
-│   └── Abstractions/
-├── Infrastructure/
-│   ├── Data/
-│   ├── Data/Repositories/
-|   |── Data/Migrations/
-│   └── Integrations/
-├── API/
-│   ├── Controllers/
-│   └── Models/
-└── Common/
-    ├── Exceptions/
-    ├── Extensions/
-    └── Utilities/
-
-=== Folder Structure Descriptions
-
-- **Application/**: Contains application logic that orchestrates tasks and rules using services and interfaces.
-  - `Abstractions/`: Define contracts used in the application layer (e.g., `IOrderService`, `IOrderQuery`).
-  - `Services/`: Implement application services coordinating domain operations.
-  - `Queries/`: Implement Data projections queries for Entities.
-  - `DTOs/`: Define data transfer objects used between layers.
-
-- **Domain/**: Represents the core business logic and rules.
-  - `Entities/`: Core domain models (e.g., `Order`, `User`). 
-  - `ValueObjects/`: Immutable types with value equality (e.g., `Address`, `OrderNumber`).
-  - `Enums/`: Domain-specific enums (e.g., `OrderStatus`).
-  - `Abstractions/`: Domain service interfaces or policies.
-
-- **Infrastructure/**: Implements interfaces and services used by other layers.
-  - `Data/`: Data context classes (e.g., `AppDbContext`).
-  - `Data/Configurations` EntityTypeConfiguration (e.g., `OrderConfiguration`)
-  - `Data/Repositories/`: Implement repository interfaces (e.g., `OrderRepository`).
-  - `Data/Migrations/`: Entity Framework Core Migrations.
-  - `Integrations/`: External service integrations (e.g., emailing, payments).
-
-- **API/**: The entry point layer, hosting controllers and request/response models.
-  - `Controllers/`: API endpoints handling HTTP requests.
-  - `Models/`: Input and output models for API operations.
-
-- **Common/**: Shared components used across the project.
-  - `Exceptions/`: Custom exceptions.
-  - `Extensions/`: Extension methods.
-  - `Utilities/`: Helpers and utility classes.
-
+├── Application/                       // Application layer orchestrating use cases and rules
+│   ├── Abstractions/                 // Interfaces (e.g., IOrderService, IOrderQuery)
+│   ├── Services/                     // Implementations of application services
+│   ├── Queries/                      // Projection-based data access (read side)
+│   └── DTOs/                         // Data Transfer Objects for input/output across layers
+│
+├── Domain/                           // Core business logic and domain model
+│   ├── Entities/                     // Main domain entities (e.g., Order, User)
+│   ├── ValueObjects/                // Immutable value types (e.g., Address)
+│   ├── Enums/                        // Domain-specific enumerations (e.g., OrderStatus)
+│   └── Abstractions/                // Domain service interfaces and domain policies
+│
+├── Infrastructure/                   // Implementations of technical details
+│   ├── Data/                         // EF Core DbContext and configurations
+│   │   ├── Configurations/          // EntityTypeConfigurations (e.g., OrderConfiguration)
+│   │   ├── Repositories/            // Repository implementations (e.g., OrderRepository)
+│   │   └── Migrations/              // EF Core database migrations
+│   └── Integrations/                // Integrations with external services (e.g., payment gateway)
+│
+├── API/                              // Presentation layer (entry point)
+│   ├── Controllers/                 // API controllers (HTTP endpoints)
+│   └── Models/                      // API request and response models
+│
+├── Common/                           // Shared cross-cutting utilities and helpers
+│   ├── Exceptions/                  // Custom exception classes
+│   ├── Extensions/                  // Extension methods for cleaner code
+│   └── Utilities/                   // General-purpose helpers and utility functions
+----
+ 
 === Naming Conventions
 
 - Use `PascalCase` for class names, method names, and properties.
