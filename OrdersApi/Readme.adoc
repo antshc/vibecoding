@@ -1,0 +1,212 @@
+= Order Service
+
+*Project:* `OrdersApi`
+
+== Responsibilities:
+
+* Validate user and payment input
+* Persist order in Azure SQL
+* Emit `OrderCreated` event
+
+== Technologies:
+
+* ASP.NET 8
+* Entity Framework Core
+* MassTransit + Azure Service Bus
+
+== Best Practices:
+
+* Use transactional outbox pattern
+* Ensure idempotent processing using correlation IDs
+
+== Patterns:
+* Domain-Driven Design
+* Transactional Outbox
+* Event-Driven Architecture
+
+
+== Code Standards
+This guide defines coding conventions for projects using Clean Architecture and Domain-Driven Design (DDD) principles.
+To ensure maintainability, testability, and scalability of the `OrdersApi` project, we apply Clean Architecture principles combined with Domain-Driven Design (DDD). 
+This approach organizes code by business domain and separates concerns clearly across layers.
+All layers are implemented within the same project for simplicity using naming conventions standard to .NET applications:
+This structure encourages separation of concerns, facilitates unit testing, and allows the system to grow without becoming monolithic or tightly coupled.
+
+=== Folders Structure
+OrdersApi/
+├── Application/
+│   ├── Abstractions/
+│   ├── Services/
+│   └── DTOs/
+├── Domain/
+│   ├── Entities/
+│   ├── ValueObjects/
+│   ├── Enums/
+│   └── Abstractions/
+├── Infrastructure/
+│   ├── Data/
+│   ├── Data/Repositories/
+|   |── Data/Migrations/
+│   └── Integrations/
+├── API/
+│   ├── Controllers/
+│   └── Models/
+└── Common/
+    ├── Exceptions/
+    ├── Extensions/
+    └── Utilities/
+
+=== Folder Structure Descriptions
+
+- **Application/**: Contains application logic that orchestrates tasks and rules using services and interfaces.
+  - `Abstractions/`: Define contracts used in the application layer (e.g., `IOrderService`, `IOrderQuery`).
+  - `Services/`: Implement application services coordinating domain operations.
+  - `Queries/`: Implement Data projections queries for Entities.
+  - `DTOs/`: Define data transfer objects used between layers.
+
+- **Domain/**: Represents the core business logic and rules.
+  - `Entities/`: Core domain models (e.g., `Order`, `User`). 
+  - `ValueObjects/`: Immutable types with value equality (e.g., `Address`, `OrderNumber`).
+  - `Enums/`: Domain-specific enums (e.g., `OrderStatus`).
+  - `Abstractions/`: Domain service interfaces or policies.
+
+- **Infrastructure/**: Implements interfaces and services used by other layers.
+  - `Data/`: Data context classes (e.g., `AppDbContext`).
+  - `Data/Configurations` EntityTypeConfiguration (e.g., `OrderConfiguration`)
+  - `Data/Repositories/`: Implement repository interfaces (e.g., `OrderRepository`).
+  - `Data/Migrations/`: Entity Framework Core Migrations.
+  - `Integrations/`: External service integrations (e.g., emailing, payments).
+
+- **API/**: The entry point layer, hosting controllers and request/response models.
+  - `Controllers/`: API endpoints handling HTTP requests.
+  - `Models/`: Input and output models for API operations.
+
+- **Common/**: Shared components used across the project.
+  - `Exceptions/`: Custom exceptions.
+  - `Extensions/`: Extension methods.
+  - `Utilities/`: Helpers and utility classes.
+
+=== Naming Conventions
+
+- Use `PascalCase` for class names, method names, and properties.
+- Use `camelCase` for local variables and parameters.
+- Prefix interfaces with `I` (e.g., `IOrderService`).
+- Suffix DTOs with `Dto` (e.g., `CreateOrderDto`).
+- Use descriptive names over abbreviations.
+
+
+=== Class Layout
+
+Each class must follow this structure:
+
+1. `using` statements
+2. `namespace` file scope declaration
+3. XML `<summary>` comment for the class
+4. Class declaration
+5. Fields and properties
+6. Constructors
+7. Methods (public first, then private)
+8. Events or handlers (if applicable)
+
+Example:
+
+[source,csharp]
+----
+namespace OrdersApi.Domain.Entities;
+
+public class Order
+{
+    private Order() { } // EF Core requires a parameterless constructor
+
+    public Order(Guid id, Guid userId, string status, string products, decimal total)
+    {
+        if (id == Guid.Empty)
+            throw new ArgumentException("Id cannot be empty.", nameof(id));
+        if (userId == Guid.Empty)
+            throw new ArgumentException("UserId cannot be empty.", nameof(userId));
+        if (string.IsNullOrWhiteSpace(status))
+            throw new ArgumentException("Status cannot be null or whitespace.", nameof(status));
+        if (string.IsNullOrWhiteSpace(products))
+            throw new ArgumentException("Products cannot be null or whitespace.", nameof(products));
+        if (total < 0)
+            throw new ArgumentOutOfRangeException(nameof(total), "Total cannot be negative.");
+
+        Id = id;
+        UserId = userId;
+        Status = status;
+        Products = products;
+        Total = total;
+    }
+
+    public Guid Id { get; private set; }
+    public Guid UserId { get; private set; }
+    public string Status { get; private set; }
+    public string Products { get; private set; }
+    public decimal Total { get; private set; }
+
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj is null || GetType() != obj.GetType())
+            return false;
+
+        var other = (Order)obj;
+        return Id == other.Id;
+    }
+
+    public override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
+
+    public static bool operator ==(Order left, Order right)
+    {
+        if (ReferenceEquals(left, right))
+            return true;
+        if (left is null || right is null)
+            return false;
+        return left.Id == right.Id;
+    }
+
+    public static bool operator !=(Order left, Order right)
+    {
+        return !(left == right);
+    }
+
+    // Add behavior here (DDD principle)
+}
+----
+
+== 4. DDD Best Practices
+
+- Entities should contain behavior, not just data.
+- Use **value objects** where applicable.
+- Repositories belong to the **domain interface layer**, implementations in infrastructure.
+- Services should represent **application use cases**, not utility logic.
+
+== 5. Dependency Injection
+
+- Use constructor injection for all dependencies.
+- Register dependencies in `Startup.cs` or `Program.cs` (via IServiceCollection).
+
+== 6. Event Handling
+
+- Use **Transactional Outbox** pattern to publish events after transactions.
+- Events must be immutable.
+- Consumers should be idempotent (use CorrelationId).
+
+== 7. Testing Standards
+
+- Unit tests for each service, use case, and repository.
+- Use Moq/FakeItEasy for mocking.
+- Integration tests should run with Dockerized dependencies (SQL, Service Bus Emulator).
+
+== 8. General Rules
+
+- No business logic in controllers — delegate to Application layer.
+- Use async/await for all I/O operations.
+- Avoid static utility classes unless absolutely necessary.
+- Keep methods short and focused — ideally under 20 lines.
+
+

@@ -1,0 +1,45 @@
+# .editorconfig for .NET 8 projects
+
+root = true
+
+[*.cs]
+charset = utf-8-bom
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = crlf
+
+# C# code style rules
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+csharp_new_line_before_open_brace = all
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_prefer_braces = true:suggestion
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+csharp_style_expression_bodied_methods = false:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+
+# File-scoped namespaces (default in .NET 8)
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Nullable reference types
+dotnet_style_require_accessibility_modifiers = always:suggestion
+
+# Organize usings
+dotnet_separate_import_directive_groups = true
+
+[*.{cs,csx}]
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,xml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

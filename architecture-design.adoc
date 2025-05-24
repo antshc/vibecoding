@@ -1,0 +1,160 @@
+= High-Load Order Processing Architecture (E-Commerce)
+:author: Vibe Software Developer
+:toc:
+
+== Overview
+
+This document outlines the architecture for a high-load, real-time order processing system in an e-commerce environment. The flow includes:
+
+. Creating a new order
+. Making a payment via a third-party system
+. Notifying the user at each step via SignalR
+
+== Technology Stack
+
+* Azure SQL Server
+* Azure Service Bus
+* Azure Service Bus Emulator
+* AppInsights
+* ASP.NET 8
+* MassTransit
+* Docker
+* SignalR
+
+== High-Level Architecture
+
+----
+[Client (UI)] <--> [API Gateway / Order Controller]
+                        |
+        --------------------------------------------------
+        |                         |                      |
+[Order Service]        [Payment Service]        [Notification Service]
+        |                         |                      |
+  [Azure SQL DB]         [3rd Party Payment]     [SignalR / AppInsights]
+        |
+[Azure Service Bus] <--> [MassTransit Message Bus]
+----
+
+== Services
+
+=== Order Service
+
+*Project:* `OrdersApi`
+
+*Responsibilities:*
+
+* Validate user and payment input
+* Persist order in Azure SQL
+* Emit `OrderCreated` event
+
+*Technologies:*
+
+* ASP.NET 8
+* Entity Framework Core
+* MassTransit + Azure Service Bus
+
+*Best Practices:*
+* Use transactional outbox pattern
+* Ensure idempotent processing using correlation IDs
+
+*Patterns:*
+
+* Domain-Driven Design
+* Transactional Outbox
+* Event-Driven Architecture
+
+=== Payment Service
+
+*Responsibilities:*
+
+* Subscribe to `OrderCreated`
+* Call third-party payment gateway
+* Emit `PaymentProcessed` event
+
+*Technologies:*
+
+* ASP.NET Worker
+* MassTransit + Azure Service Bus
+* Polly for retries and circuit breakers
+
+*Best Practices:*
+
+* Use gateway pattern for external calls
+* Correlate AppInsights logs across services
+
+*Patterns:*
+
+* Saga/Process Manager
+* Circuit Breaker
+* Retry with Exponential Backoff
+
+=== Notification Service
+
+*Responsibilities:*
+
+* Subscribe to all key events
+* Use SignalR to notify client in real-time
+
+*Technologies:*
+
+* ASP.NET SignalR
+* MassTransit + Azure Service Bus
+
+*Best Practices:*
+
+* SignalR groups by user/session
+* Fallback to polling if needed
+
+*Patterns:*
+
+* Pub/Sub
+* Real-Time Push Notification
+
+=== Order Controller (API Gateway)
+
+*Responsibilities:*
+
+* Accept initial user request
+* Initiate order flow
+* Manage SignalR session
+
+*Technologies:*
+
+* ASP.NET 8
+* SignalR JavaScript client
+* Dockerized for horizontal scaling
+
+*Best Practices:*
+
+* Use correlation ID for observability
+* Design stateless controller for resilience
+
+== Key Architectural Considerations
+
+[cols="1,3", options="header"]
+|===
+| Concern            | Strategy
+| Scalability        | Docker + Azure Load Balancer + Horizontal scaling
+| Fault Tolerance    | Circuit breaker, retry, fallback (Polly)
+| Observability      | AppInsights tracing with correlation ID
+| Data Consistency   | Eventual consistency via outbox pattern
+| Real-Time Feedback | SignalR with group/user mapping
+| Backpressure       | Azure Service Bus + TTL + Dead Letter Queues
+|===
+
+== Event Flow Summary
+
+. Client initiates order
+. Order Service persists and emits `OrderCreated`
+. Payment Service processes payment and emits `PaymentProcessed`
+. Notification Service updates UI via SignalR
+. Final `OrderCompleted` event triggers UI update and logs
+
+== Design Patterns
+
+* Saga Pattern
+* Circuit Breaker
+* Event-Driven Architecture
+* Transactional Outbox
+* Idempotent Receiver
+* Real-Time Notification via SignalR
