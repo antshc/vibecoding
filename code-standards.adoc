@@ -48,15 +48,15 @@ This guide defines coding standards for each layer of the `OrdersApi` project ba
 === API/
 Responsible for handling HTTP requests and returning HTTP responses.
 
-**Coding Conventions:**
-- Controllers: suffix with `Controller`, use `[ApiController]` and route attributes.
-- Models: suffix with `Request` or `Response`. No domain logic.
-- Dependencies: MediatR, DTOs from `Application`
+.**Coding Conventions:**    
+* Controllers: suffix with `Controller`, use `[ApiController]` and route attributes.
+* Models: suffix with `Request` or `Response`. No domain logic.
+* Dependencies: MediatR, DTOs from `Application`
 
-**Principles:**
-- Keep controllers thin
-- Use dependency injection
-- Validate input using attributes or FluentValidation
+.**Principles:**
+* Keep controllers thin
+* Use dependency injection
+* Validate input using attributes or FluentValidation
 
 **Example:**
 [source,csharp]
@@ -86,13 +86,13 @@ public class OrdersController : ControllerBase
 === Application/
 Orchestrates use cases and delegates to domain logic.
 
-**Abstractions/**
-- Interfaces for services and queries
-- Named with `I` prefix (e.g., `IOrderService`)
+.**Abstractions/**    
+* Interfaces for services and queries
+* Named with `I` prefix (e.g., `IOrderService`)
 
-**DTOs/**
-- Pure data, no logic
-- Named with `Request`, `Response`, `Dto` suffix
+.**DTOs/**
+* Pure data, no logic
+* Named with `Request`, `Response`, `Dto` suffix
 
 **Services/**
 - Coordinate operations
