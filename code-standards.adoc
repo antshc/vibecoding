@@ -16,9 +16,9 @@ OrdersApi/
 │
 ├── Application/                      // Application layer orchestrating use cases and rules
 │   ├── Abstractions/                 // Interfaces (e.g., IOrderService, IOrderQuery)
+│   ├──── DTOs/                       // Data Transfer Objects for input/output across layers
 │   ├── Services/                     // Implementations of application services
-│   ├── Queries/                      // Projection-based data access (read side)
-│   └── DTOs/                         // Data Transfer Objects for input/output across layers
+│   └── Queries/                      // Projection-based data access (read side)
 │
 ├── Domain/                           // Core business logic and domain model
 │   ├── Entities/                     // Main domain entities (e.g., Order, User)
@@ -33,91 +33,136 @@ OrdersApi/
 │   │   └── Migrations/              // EF Core database migrations
 │   └── Integrations/                // Integrations with external services (e.g., payment gateway)
 │
-├── Common/                           // Shared cross-cutting utilities and helpers
-│   ├── Exceptions/                  // Custom exception classes
-│   ├── Extensions/                  // Extension methods for cleaner code
-│   └── Utilities/                   // General-purpose helpers and utility functions
+├── Shared/                          // Utility types used across all layers.
+|   |── Kernel                       // Interfaces, constants, base types
+|   |── Results                      // Functional result types (e.g., Result<T>, Error)
+|   └── Exceptions                   // Base exception types
 ----
- 
-== Naming Conventions (Extended with Clean Code Principles)
 
-=== General Principles
-- *Be descriptive and unambiguous.* Names should reveal intent.
-- *Avoid disinformation.* Don’t use names that could be misleading (e.g., `list` for a variable that is actually a map).
-- *Use pronounceable names.* E.g., `customerAddress` instead of `custAddr`.
-- *Use searchable names.* Avoid single-letter or overly short names (e.g., prefer `orderTotal` over `ot`).
-- *Avoid encoding type or scope into names.* Let the type system speak for itself.
-- *Use consistent naming across the codebase.*
-- *Use file scoped namespace in all classes*
+== Class Best Practices by Folder Structure
 
-=== Classes, Methods, and Properties
-- Use *PascalCase* (e.g., `OrderService`, `CalculateTotal`).
-- Name *classes* as *nouns or noun phrases* (e.g., `InvoiceGenerator`, `UserRepository`).
-- Name *methods* as *verbs or verb phrases* (e.g., `GetUserById`, `ProcessPayment`).
-- Use *Boolean method names* that imply true/false (e.g., `IsAvailable`, `HasPermission`).
-- Properties should be named like their underlying data (e.g., `FirstName`, `CreatedAt`).
+This guide defines coding standards for each layer of the `OrdersApi` project based on Clean Architecture, Clean Code, and Domain-Driven Design (DDD). It is optimized for use with GitHub Copilot.
 
-=== Local Variables and Parameters
-- Use *camelCase* (e.g., `orderId`, `customerEmail`).
-- Choose *descriptive names* based on purpose, not type (e.g., `startDate` over `date1`).
-- Use *short names* (e.g., `i`, `j`, `k`) only in *small, tightly scoped loops*.
+---
 
-=== Interfaces
-- Prefix with `I` (e.g., `IUserService`, `IEmailSender`).
-- Interface names should describe *capabilities or roles* (e.g., `ILogger`, `ICacheable`).
+=== API/
+Responsible for handling HTTP requests and returning HTTP responses.
 
-=== Constants and Enums
-- Use *PascalCase* for enums and enum values (e.g., `OrderStatus.Pending`).
-- Enum names should be *singular* (e.g., `Color`, not `Colors`).
+.**Coding Conventions:**    
+* Controllers: suffix with `Controller`, use `[ApiController]` and route attributes.
+* Models: suffix with `Request` or `Response`. No domain logic.
+* Dependencies: MediatR, DTOs from `Application`
 
+.**Principles:**
+* Keep controllers thin
+* Use dependency injection
+* Validate input using attributes or FluentValidation
 
-== DDD Best Practices
+**Example:**
+[source,csharp]
+----
+[ApiController]
+[Route("api/orders")]
+public class OrdersController : ControllerBase
+{
+    private readonly IOrderService _orderService;
 
-- Entities should contain behavior, not just data.
-- Use **value objects** where applicable.
-- Repositories belong to the **domain interface layer**, implementations in infrastructure.
-- Services should represent **application use cases**, not utility logic.
+    public OrdersController(IOrderService orderService)
+    {
+        _orderService = orderService;
+    }
 
-== Dependency Injection
+    [HttpPost]
+    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
+    {
+        var result = await _orderService.CreateOrderAsync(request);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
+    }
+}
+----
 
-- Use constructor injection for all dependencies.
-- Register dependencies in `Startup.cs` or `Program.cs` (via IServiceCollection).
+---
 
-== Event Handling
+=== Application/
+Orchestrates use cases and delegates to domain logic.
 
-- Use **Transactional Outbox** pattern to publish events after transactions.
-- Events must be immutable.
-- Consumers should be idempotent (use CorrelationId).
+.**Abstractions/**    
+* Interfaces for services and queries
+* Named with `I` prefix (e.g., `IOrderService`)
 
-== General Rules
+.**DTOs/**
+* Pure data, no logic
+* Named with `Request`, `Response`, `Dto` suffix
 
-- No business logic in controllers — delegate to Application layer.
-- Use async/await for all I/O operations.
-- Avoid static utility classes unless absolutely necessary.
-- Keep methods short and focused — ideally under 20 lines.
+.**Services/**
+* Coordinate operations
+* Do not contain business rules
 
+.**Queries/**
+* Read-only operations
 
+.**Principles:**
+* Services contain application logic
+* Reuse domain logic via entities and value objects
 
-== Entity class layout
+**Example (Service):**
+[source,csharp]
+----
+public class OrderService : IOrderService
+{
+    private readonly IOrderRepository _repository;
+    private readonly ICustomerRepository _customerRepository;
 
-Each class must follow this structure:
+    public OrderService(IOrderRepository repository, ICustomerRepository customerRepository)
+    {
+        _repository = repository;
+        _customerRepository = customerRepository;
+    }
 
-1. `using` statements
-2. `namespace` file scope declaration
-3. XML `<summary>` comment for the class
-4. Class declaration
-5. Fields and properties
-6. Constructors
-7. Methods (public first, then private)
-8. Events or handlers (if applicable)
+    public async Task<Result<Guid>> CreateOrderAsync(CreateOrderRequest request)
+    {
+        var customer = await _customerRepository.GetByIdAsync(request.CustomerId);
+        if (customer is null)
+            return Result.Fail<Guid>("Customer not found");
 
-Example:
+        var order = Order.Create(customer, request.Items);
+        await _repository.AddAsync(order);
 
+        return Result.Ok(order.Id);
+    }
+}
+----
+
+---
+
+=== Domain/
+Represents the core business logic and rules.
+
+.**Entities/**
+* Contain business logic and invariants
+* Have identity (Id)
+
+.**ValueObjects/**
+* Immutable
+* Equality based on values
+
+.**Enums/**
+* Domain concepts, e.g., `OrderStatus`
+
+.**Abstractions/**
+* Domain service interfaces and policies
+
+.**Principles:**
+* Rich domain model
+* Encapsulate business rules
+* Use private setters
+
+**Example (Entity):**
 [source,csharp]
 ----
 namespace OrdersApi.Domain.Entities;
 
-public class Order
+public class Order: Entity<Guid>, IAggregationRoot
 {
     private Order() { } // EF Core requires a parameterless constructor
 
@@ -180,3 +225,127 @@ public class Order
     // Add behavior here (DDD principle)
 }
 ----
+
+---
+
+=== Infrastructure/
+Handles persistence, external APIs, and technical concerns.
+
+.**Data/**
+* EF Core DbContext
+* Repositories
+* Migrations
+
+.**Integrations/**
+* External service calls (e.g., payment, email)
+
+.**Principles:**
+* Do not implement business logic
+* Follow `Repository Pattern`
+
+**Example (Repository):**
+[source,csharp]
+----
+public class OrderRepository : IOrderRepository
+{
+    private readonly OrdersDbContext _context;
+
+    public OrderRepository(OrdersDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task AddAsync(Order order)
+    {
+        await _context.Orders.AddAsync(order);
+    }
+
+    public async Task<Order?> GetByIdAsync(Guid id)
+    {
+        return await _context.Orders.Include(o => o.Items)
+                                     .FirstOrDefaultAsync(o => o.Id == id);
+    }
+}
+----
+
+---
+
+=== Shared/
+Cross-cutting concerns and common building blocks.
+
+.**Kernel/**
+* Constants, interfaces, base classes
+
+.**Results/**
+* Standard result wrappers like `Result<T>`
+
+.**Exceptions/**
+* Custom exception base types
+
+.**Principles:**
+* Reusable utilities
+* No direct domain logic
+
+**Example (Result):**
+[source,csharp]
+----
+public class Result<T>
+{
+    public bool IsSuccess { get; }
+    public T? Value { get; }
+    public string? Error { get; }
+
+    protected Result(bool isSuccess, T? value, string? error)
+    {
+        IsSuccess = isSuccess;
+        Value = value;
+        Error = error;
+    }
+
+    public static Result<T> Ok(T value) => new(true, value, null);
+    public static Result<T> Fail(string error) => new(false, default, error);
+}
+----
+
+---
+
+== Final Notes
+- Prefer constructor injection
+- Avoid service locator or static access
+- Keep methods short and descriptive
+- Use `async` and `await` consistently
+- Place interfaces in Abstractions/
+- Make entities and VOs behavior-rich, not just data bags
+
+== Naming Conventions (Extended with Clean Code Principles)
+
+=== General Principles
+- *Be descriptive and unambiguous.* Names should reveal intent.
+- *Avoid disinformation.* Don’t use names that could be misleading (e.g., `list` for a variable that is actually a map).
+- *Use pronounceable names.* E.g., `customerAddress` instead of `custAddr`.
+- *Use searchable names.* Avoid single-letter or overly short names (e.g., prefer `orderTotal` over `ot`).
+- *Avoid encoding type or scope into names.* Let the type system speak for itself.
+- *Use consistent naming across the codebase.*
+- *Use file scoped namespace in all classes*
+
+=== Classes, Methods, and Properties
+- Use *PascalCase* (e.g., `OrderService`, `CalculateTotal`).
+- Name *classes* as *nouns or noun phrases* (e.g., `InvoiceGenerator`, `UserRepository`).
+- Name *methods* as *verbs or verb phrases* (e.g., `GetUserById`, `ProcessPayment`).
+- Use *Boolean method names* that imply true/false (e.g., `IsAvailable`, `HasPermission`).
+- Properties should be named like their underlying data (e.g., `FirstName`, `CreatedAt`).
+
+=== Local Variables and Parameters
+- Use *camelCase* (e.g., `orderId`, `customerEmail`).
+- Choose *descriptive names* based on purpose, not type (e.g., `startDate` over `date1`).
+- Use *short names* (e.g., `i`, `j`, `k`) only in *small, tightly scoped loops*.
+
+=== Interfaces
+- Prefix with `I` (e.g., `IUserService`, `IEmailSender`).
+- Interface names should describe *capabilities or roles* (e.g., `ILogger`, `ICacheable`).
+
+=== Constants and Enums
+- Use *PascalCase* for enums and enum values (e.g., `OrderStatus.Pending`).
+- Enum names should be *singular* (e.g., `Color`, not `Colors`).
+
+This document can serve as reference for GitHub Copilot or any tool parsing structural conventions and standards.
