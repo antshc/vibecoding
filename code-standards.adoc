@@ -10,7 +10,11 @@ This guide defines coding conventions for projects using Clean Architecture and 
 [source]
 ----
 OrdersApi/
-├── Application/                       // Application layer orchestrating use cases and rules
+├── API/                             // Presentation layer (entry point)
+│   ├── Controllers/                 // API controllers (HTTP endpoints)
+│   └── Models/                      // API request and response models
+│
+├── Application/                      // Application layer orchestrating use cases and rules
 │   ├── Abstractions/                 // Interfaces (e.g., IOrderService, IOrderQuery)
 │   ├── Services/                     // Implementations of application services
 │   ├── Queries/                      // Projection-based data access (read side)
@@ -28,10 +32,6 @@ OrdersApi/
 │   │   ├── Repositories/            // Repository implementations (e.g., OrderRepository)
 │   │   └── Migrations/              // EF Core database migrations
 │   └── Integrations/                // Integrations with external services (e.g., payment gateway)
-│
-├── API/                              // Presentation layer (entry point)
-│   ├── Controllers/                 // API controllers (HTTP endpoints)
-│   └── Models/                      // API request and response models
 │
 ├── Common/                           // Shared cross-cutting utilities and helpers
 │   ├── Exceptions/                  // Custom exception classes
