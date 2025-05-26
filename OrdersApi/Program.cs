@@ -19,9 +19,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-DependencyInjection.RegisterDependencies(builder.Services,builder.Configuration);
-
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -36,7 +33,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-PreStartup.Run(app);
 
 app.Run();
