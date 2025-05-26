@@ -94,16 +94,16 @@ Orchestrates use cases and delegates to domain logic.
 * Pure data, no logic
 * Named with `Request`, `Response`, `Dto` suffix
 
-**Services/**
-- Coordinate operations
-- Do not contain business rules
+.**Services/**
+* Coordinate operations
+* Do not contain business rules
 
-**Queries/**
-- Read-only operations
+.**Queries/**
+* Read-only operations
 
-**Principles:**
-- Services contain application logic
-- Reuse domain logic via entities and value objects
+.**Principles:**
+* Services contain application logic
+* Reuse domain logic via entities and value objects
 
 **Example (Service):**
 [source,csharp]
@@ -138,24 +138,24 @@ public class OrderService : IOrderService
 === Domain/
 Represents the core business logic and rules.
 
-**Entities/**
-- Contain business logic and invariants
-- Have identity (Id)
+.**Entities/**
+* Contain business logic and invariants
+* Have identity (Id)
 
-**ValueObjects/**
-- Immutable
-- Equality based on values
+.**ValueObjects/**
+* Immutable
+* Equality based on values
 
-**Enums/**
-- Domain concepts, e.g., `OrderStatus`
+.**Enums/**
+* Domain concepts, e.g., `OrderStatus`
 
-**Abstractions/**
-- Domain service interfaces and policies
+.**Abstractions/**
+* Domain service interfaces and policies
 
-**Principles:**
-- Rich domain model
-- Encapsulate business rules
-- Use private setters
+.**Principles:**
+* Rich domain model
+* Encapsulate business rules
+* Use private setters
 
 **Example (Entity):**
 [source,csharp]
@@ -231,17 +231,17 @@ public class Order: Entity<Guid>, IAggregationRoot
 === Infrastructure/
 Handles persistence, external APIs, and technical concerns.
 
-**Data/**
-- EF Core DbContext
-- Repositories
-- Migrations
+.**Data/**
+* EF Core DbContext
+* Repositories
+* Migrations
 
-**Integrations/**
-- External service calls (e.g., payment, email)
+.**Integrations/**
+* External service calls (e.g., payment, email)
 
-**Principles:**
-- Do not implement business logic
-- Follow `Repository Pattern`
+.**Principles:**
+* Do not implement business logic
+* Follow `Repository Pattern`
 
 **Example (Repository):**
 [source,csharp]
@@ -273,18 +273,18 @@ public class OrderRepository : IOrderRepository
 === Shared/
 Cross-cutting concerns and common building blocks.
 
-**Kernel/**
-- Constants, interfaces, base classes
+.**Kernel/**
+* Constants, interfaces, base classes
 
-**Results/**
-- Standard result wrappers like `Result<T>`
+.**Results/**
+* Standard result wrappers like `Result<T>`
 
-**Exceptions/**
-- Custom exception base types
+.**Exceptions/**
+* Custom exception base types
 
-**Principles:**
-- Reusable utilities
-- No direct domain logic
+.**Principles:**
+* Reusable utilities
+* No direct domain logic
 
 **Example (Result):**
 [source,csharp]
@@ -316,8 +316,6 @@ public class Result<T>
 - Use `async` and `await` consistently
 - Place interfaces in Abstractions/
 - Make entities and VOs behavior-rich, not just data bags
-
-
 
 == Naming Conventions (Extended with Clean Code Principles)
 
